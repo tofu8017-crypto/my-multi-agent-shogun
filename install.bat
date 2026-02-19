@@ -131,7 +131,7 @@ echo   ^|    3. ./first_setup.sh                                    ^|
 echo   ^|                                                            ^|
 echo   ^|  Every time you use / 使うたびに:                          ^|
 echo   ^|    cd /mnt/c/tools/feature-shogun                          ^|
-echo   ^|    ./shutsujin_departure.sh                                ^|
+echo   ^|    ./launch.sh                                             ^|
 echo   ^|                                                            ^|
 echo   +------------------------------------------------------------+
 echo.

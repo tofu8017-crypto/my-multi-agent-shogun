@@ -154,7 +154,7 @@ if [[ -x "$PYTHON" ]]; then
     PYTHON_AVAILABLE=true
 fi
 
-# Agent definitions (from shutsujin_departure.sh)
+# Agent definitions (from launch.sh)
 AGENTS=("karo" "ashigaru1" "ashigaru2" "ashigaru3" "ashigaru4" "ashigaru5" "ashigaru6" "ashigaru7" "gunshi")
 
 # pane-base-index
