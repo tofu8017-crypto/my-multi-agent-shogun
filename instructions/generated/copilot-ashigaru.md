@@ -449,6 +449,7 @@ git diff --exit-code instructions/generated/
 | F005 | Skip context reading | Always read first | Prevents errors |
 | F006 | Edit generated files directly (`instructions/generated/*.md`, `AGENTS.md`, `.github/copilot-instructions.md`, `agents/default/system.md`) | Edit source templates (`CLAUDE.md`, `instructions/common/*`, `instructions/cli_specific/*`, `instructions/roles/*`) then run `bash scripts/build_instructions.sh` | CI "Build Instructions Check" fails when generated files drift from templates |
 | F007 | `git push` without the User's explicit approval | Ask the User first | Prevents leaking secrets / unreviewed changes |
+| F008 | Delegate WebSearch/WebFetch to Task subagents | Use WebSearch and WebFetch tools directly yourself | Subagents may lack access to these tools. Always call WebSearch/WebFetch in your own session |
 
 ## Shogun Forbidden Actions
 
@@ -609,7 +610,7 @@ Available via `/model` command or `--model` flag:
 - Claude Sonnet 4
 - GPT-5
 
-For Ashigaru: Model set at startup via settings.yaml. Runtime switching via `type: model_switch` available but rarely needed.
+For Executor: Model set at startup via settings.yaml. Runtime switching via `type: model_switch` available but rarely needed.
 
 ## tmux Interaction
 
@@ -623,7 +624,7 @@ For Ashigaru: Model set at startup via settings.yaml. Runtime switching via `typ
 | Prompt detection | Unknown prompt format (not `❯`) |
 | Non-interactive pipe | Unconfirmed (`copilot -p` undocumented) |
 
-For the 将軍 system, tmux compatibility is a **high-risk area** requiring dedicated testing.
+For the orchestration system, tmux compatibility is a **high-risk area** requiring dedicated testing.
 
 ### Potential Workarounds
 - `!` prefix for shell commands may bypass TUI input issues
@@ -634,7 +635,7 @@ For the 将軍 system, tmux compatibility is a **high-risk area** requiring dedi
 
 | Feature | Claude Code | Copilot CLI |
 |---------|------------|-------------|
-| tmux integration | ✅ Battle-tested | ⚠️ Untested |
+| tmux integration | ✅ Production-tested | ⚠️ Untested |
 | Non-interactive mode | ✅ `claude -p` | ⚠️ Unconfirmed |
 | `/clear` context reset | ✅ Available | ❌ None (use /compact or restart) |
 | Memory MCP | ✅ Persistent knowledge graph | ❌ No equivalent |
@@ -648,7 +649,7 @@ For the 将軍 system, tmux compatibility is a **high-risk area** requiring dedi
 
 Copilot CLI uses auto-compaction at 95% token limit. No `/clear` equivalent exists.
 
-For the 将軍 system, if Copilot CLI is integrated:
+For the orchestration system, if Copilot CLI is integrated:
 1. Auto-compaction handles most cases automatically
 2. `/compact` can be sent via send-keys if tmux integration works
 3. Session state preserved through compaction (unlike `/clear` which resets)

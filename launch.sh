@@ -491,7 +491,7 @@ tmux set-option -g window-size latest
 tmux set-option -g aggressive-resize on
 
 # オーケストレーターペインはウィンドウ名 "main" で指定（base-index 1 環境でも動く）
-SHOGUN_PROMPT=$(generate_prompt "将軍" "magenta" "$SHELL_SETTING")
+SHOGUN_PROMPT=$(generate_prompt "総統" "magenta" "$SHELL_SETTING")
 tmux send-keys -t shogun:main "cd \"$(pwd)\" && export PS1='${SHOGUN_PROMPT}' && clear && \"${SCRIPT_DIR}/.venv/bin/python3\" \"${SCRIPT_DIR}/scripts/generate_banner_art.py\" --agent shogun" Enter
 tmux select-pane -t shogun:main -P 'bg=#002b36'  # オーケストレーターの Solarized Dark
 tmux set-option -p -t shogun:main @agent_id "shogun"

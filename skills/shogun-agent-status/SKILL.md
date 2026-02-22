@@ -1,6 +1,6 @@
 ---
 name: shogun-agent-status
-description: 全エージェント（家老・足軽1-7・軍師）の稼働状態を一覧表示するスキル。tmux pane状態（稼働中/待機中/不在）とタスクYAML状態（task_id, status）と未読inbox数を統合表示。「稼働確認」「エージェント状態」「布陣確認」「agent status」で起動。
+description: 全エージェント（コーディネーター・エグゼキューター1-7・アナライザー）の稼働状態を一覧表示するスキル。tmux pane状態（稼働中/待機中/不在）とタスクYAML状態（task_id, status）と未読inbox数を統合表示。「稼働確認」「エージェント状態」「チーム構成確認」「agent status」で起動。
 ---
 
 # /agent-status - エージェント稼働確認
@@ -17,8 +17,8 @@ Claude Code / Codex CLI 両方に対応。
 
 ## When to Use
 
-- 「稼働確認」「エージェント状態」「布陣確認」と言われた時
-- 足軽が暇そうか確認したい時
+- 「稼働確認」「エージェント状態」「チーム構成確認」と言われた時
+- エグゼキューターが暇そうか確認したい時
 - タスク配分前に空いているエージェントを探す時
 - 誰かが止まっているか調べたい時
 
@@ -48,4 +48,4 @@ bash scripts/agent_status.sh
 - **Pane=待機中 + Status=assigned**: タスク割当済みだがCLIが止まっている。要調査。
 - **Pane=稼働中 + Status=done**: タスク完了後に別作業中（inbox処理等）。
 - **Inbox > 0**: 未読メッセージあり。エージェントが処理していない可能性。
-- **Pane=不在**: tmux paneが存在しない（shutsujin未実行 or pane killed）。
+- **Pane=不在**: tmux paneが存在しない（起動未実行 or pane killed）。
