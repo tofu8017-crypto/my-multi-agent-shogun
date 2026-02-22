@@ -567,8 +567,8 @@ if [ ! -f "$SCRIPT_DIR/config/settings.yaml" ]; then
 # multi-agent-shogun 設定ファイル
 
 # 言語設定
-# ja: 日本語（戦国風日本語のみ、併記なし）
-# en: 英語（戦国風日本語 + 英訳併記）
+# ja: 日本語（Claude Code風日本語のみ、併記なし）
+# en: 英語（Claude Code風日本語 + 英訳併記）
 # その他の言語コード（es, zh, ko, fr, de 等）も対応
 language: ja
 
@@ -621,7 +621,7 @@ if [ ! -f "$SCRIPT_DIR/memory/global_context.md" ]; then
 最終更新: (未設定)
 
 ## システム方針
-- (殿の好み・方針をここに記載)
+- (ユーザーの好み・方針をここに記載)
 
 ## プロジェクト横断の決定事項
 - (複数プロジェクトに影響する決定をここに記載)
@@ -637,11 +637,11 @@ fi
 RESULTS+=("設定ファイル: OK")
 
 # ============================================================
-# STEP 8: 足軽用タスク・レポートファイル初期化
+# STEP 8: エグゼキューター用タスク・レポートファイル初期化
 # ============================================================
 log_step "STEP 8: キューファイル初期化"
 
-# 足軽数を settings.yaml から動的に取得（設定がなければデフォルト7）
+# エグゼキューター数を settings.yaml から動的に取得（設定がなければデフォルト7）
 _SETUP_VENV_PYTHON="$SCRIPT_DIR/.venv/bin/python3"
 _SETUP_ASHIGARU_COUNT=$(
     if [[ -x "$_SETUP_VENV_PYTHON" ]]; then
@@ -662,12 +662,12 @@ except Exception:
 )
 _SETUP_ASHIGARU_COUNT=${_SETUP_ASHIGARU_COUNT:-7}
 
-# 足軽用タスクファイル作成
+# エグゼキューター用タスクファイル作成
 for i in $(seq 1 "$_SETUP_ASHIGARU_COUNT"); do
     TASK_FILE="$SCRIPT_DIR/queue/tasks/ashigaru${i}.yaml"
     if [ ! -f "$TASK_FILE" ]; then
         cat > "$TASK_FILE" << EOF
-# 足軽${i}専用タスクファイル
+# エグゼキューター${i}専用タスクファイル
 task:
   task_id: null
   parent_cmd: null
@@ -678,9 +678,9 @@ task:
 EOF
     fi
 done
-log_info "足軽タスクファイル (1-${_SETUP_ASHIGARU_COUNT}) を確認/作成しました"
+log_info "エグゼキュータータスクファイル (1-${_SETUP_ASHIGARU_COUNT}) を確認/作成しました"
 
-# 足軽用レポートファイル作成
+# エグゼキューター用レポートファイル作成
 for i in $(seq 1 "$_SETUP_ASHIGARU_COUNT"); do
     REPORT_FILE="$SCRIPT_DIR/queue/reports/ashigaru${i}_report.yaml"
     if [ ! -f "$REPORT_FILE" ]; then
@@ -693,7 +693,7 @@ result: null
 EOF
     fi
 done
-log_info "足軽レポートファイル (1-${_SETUP_ASHIGARU_COUNT}) を確認/作成しました"
+log_info "エグゼキューターレポートファイル (1-${_SETUP_ASHIGARU_COUNT}) を確認/作成しました"
 
 RESULTS+=("キューファイル: OK")
 
@@ -704,7 +704,7 @@ log_step "STEP 9: 実行権限設定"
 
 SCRIPTS=(
     "setup.sh"
-    "shutsujin_departure.sh"
+    "launch.sh"
     "first_setup.sh"
 )
 
@@ -752,7 +752,7 @@ if [ -f "$BASHRC_FILE" ]; then
             echo "# multi-agent-shogun aliases (added by first_setup.sh)" >> "$BASHRC_FILE"
         fi
         echo "$CSS_FUNC" >> "$BASHRC_FILE"
-        log_info "css 関数を追加しました（将軍ウィンドウ — 自動掃除付き）"
+        log_info "css 関数を追加しました（オーケストレーターウィンドウ — 自動掃除付き）"
         ALIAS_ADDED=true
     else
         # 関数は存在する → 最新版に更新
@@ -765,7 +765,7 @@ if [ -f "$BASHRC_FILE" ]; then
     # csm 関数
     if ! grep -q "^csm()" "$BASHRC_FILE" 2>/dev/null; then
         echo "$CSM_FUNC" >> "$BASHRC_FILE"
-        log_info "csm 関数を追加しました（家老・足軽ウィンドウ — 自動掃除付き）"
+        log_info "csm 関数を追加しました（コーディネーター・エグゼキューターウィンドウ — 自動掃除付き）"
         ALIAS_ADDED=true
     else
         sed -i '/^csm()/d' "$BASHRC_FILE"
@@ -899,7 +899,7 @@ if [ "$HAS_ERROR" = true ]; then
     echo "  すべての依存関係が揃ったら、再度このスクリプトを実行して確認できます。"
 else
     echo "  ╔══════════════════════════════════════════════════════════════╗"
-    echo "  ║  ✅ セットアップ完了！準備万端でござる！                      ║"
+    echo "  ║  ✅ セットアップ完了！準備完了！                              ║"
     echo "  ╚══════════════════════════════════════════════════════════════╝"
 fi
 
@@ -927,21 +927,21 @@ echo "     ※ 一度承認すれば ~/.claude/ に保存され、以降は不�
 echo ""
 echo "  ────────────────────────────────────────────────────────────────"
 echo ""
-echo "  出陣（全エージェント起動）:"
-echo "     ./shutsujin_departure.sh"
+echo "  起動（全エージェント起動）:"
+echo "     ./launch.sh"
 echo ""
 echo "  オプション:"
-echo "     ./shutsujin_departure.sh -s            # セットアップのみ（Claude手動起動）"
-echo "     ./shutsujin_departure.sh -t            # Windows Terminalタブ展開"
-echo "     ./shutsujin_departure.sh -shell bash   # bash用プロンプトで起動"
-echo "     ./shutsujin_departure.sh -shell zsh    # zsh用プロンプトで起動"
+echo "     ./launch.sh -s            # セットアップのみ（Claude手動起動）"
+echo "     ./launch.sh -t            # Windows Terminalタブ展開"
+echo "     ./launch.sh -shell bash   # bash用プロンプトで起動"
+echo "     ./launch.sh -shell zsh    # zsh用プロンプトで起動"
 echo ""
 echo "  ※ シェル設定は config/settings.yaml の shell: でも変更可能です"
 echo ""
 echo "  詳細は README.md を参照してください。"
 echo ""
 echo "  ════════════════════════════════════════════════════════════════"
-echo "   天下布武！ (Tenka Fubu!)"
+echo "   Let's ship it! 🚀"
 echo "  ════════════════════════════════════════════════════════════════"
 echo ""
 

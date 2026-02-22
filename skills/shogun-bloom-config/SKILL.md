@@ -17,7 +17,7 @@ ready-to-paste 形式で生成する。
 **Output:**
 1. `capability_tiers` YAML → `config/settings.yaml` にそのまま貼り付け可
 2. `available_cost_groups` 宣言
-3. 固定エージェント推奨モデル（Karo / Gunshi）
+3. 固定エージェント推奨モデル（コーディネーター / アナライザー）
 4. カバレッジギャップ警告（Bloom L6が対応不可の場合など）
 
 ## When to Use
@@ -42,7 +42,7 @@ question: "Claudeのプランを教えてください。"
 header: "Claude Plan"
 options:
   - label: "Max 20x ($200/月)"
-    description: "Opus・Sonnet・Haiku全モデル利用可。20倍使用量。Spark Dual運用ならコレ (Recommended)"
+    description: "Opus・Sonnet・Haiku全モデル利用可。20倍使用量。Spark Dual運用ならこれ (Recommended)"
   - label: "Max 5x ($100/月)"
     description: "同上、5倍使用量。コスト重視で十分な量なら。"
   - label: "Pro ($20/月)"
@@ -60,11 +60,11 @@ question: "ChatGPT（OpenAI）のプランを教えてください。"
 header: "ChatGPT Plan"
 options:
   - label: "なし（Claude onlyで運用）"
-    description: "Claude枠のみ。シンプル構成。足軽はHaiku4.5が主力。"
+    description: "Claude枠のみ。シンプル構成。エグゼキューターはHaiku4.5が主力。"
   - label: "Plus ($20/月)"
     description: "gpt-5.3-codex利用可（Spark不可）。L4まで補完できる。"
   - label: "Pro ($200/月)"
-    description: "Spark(1000 tok/s, Terminal-Bench 58.4%) + gpt-5.3(77.3%)利用可。足軽7体の最強構成 (Recommended)"
+    description: "Spark(1000 tok/s, Terminal-Bench 58.4%) + gpt-5.3(77.3%)利用可。エグゼキューター7体の最強構成 (Recommended)"
 ```
 
 ### Step 2.5: Q3 — Rate limit preference (両方契約の場合のみ)
@@ -133,8 +133,8 @@ Output ONLY the matching pattern. Show:
 
 | エージェント | 推奨モデル | 備考 |
 |------------|-----------|------|
-| Karo (家老) | `claude-sonnet-4-6` | Opusは使えないのでSonnet |
-| Gunshi (軍師) | `claude-sonnet-4-6` | 同上 |
+| Karo (コーディネーター) | `claude-sonnet-4-6` | Opusは使えないのでSonnet |
+| Gunshi (アナライザー) | `claude-sonnet-4-6` | 同上 |
 
 ### `config/settings.yaml` snippet
 
@@ -163,14 +163,14 @@ capability_tiers:
 
 ## Pattern A — Claude Pro/Max のみ ($20–$200/月)
 
-> Claude Opusまで全モデル利用可。足軽はHaiku(L1-L3)→Sonnet(L4-L5)→Opus(L6)で自動ルーティング。
+> Claude Opusまで全モデル利用可。エグゼキューターはHaiku(L1-L3)→Sonnet(L4-L5)→Opus(L6)で自動ルーティング。
 
 ### 固定エージェント
 
 | エージェント | 推奨モデル | 備考 |
 |------------|-----------|------|
-| Karo (家老) | `claude-sonnet-4-6` | L4-L5オーケストレーション。Opusは過剰。 |
-| Gunshi (軍師) | `claude-opus-4-6` | L5-L6の深いQC・アーキテクチャ評価 |
+| Karo (コーディネーター) | `claude-sonnet-4-6` | L4-L5オーケストレーション。Opusは過剰。 |
+| Gunshi (アナライザー) | `claude-opus-4-6` | L5-L6の深いQC・アーキテクチャ評価 |
 
 ### `config/settings.yaml` snippet
 
@@ -210,8 +210,8 @@ capability_tiers:
 
 | エージェント | 推奨モデル |
 |------------|-----------|
-| Karo (家老) | `gpt-5.3-codex` |
-| Gunshi (軍師) | `gpt-5.1-codex-max` |
+| Karo (コーディネーター) | `gpt-5.3-codex` |
+| Gunshi (アナライザー) | `gpt-5.1-codex-max` |
 
 ### `config/settings.yaml` snippet
 
@@ -250,8 +250,8 @@ capability_tiers:
 
 | エージェント | 推奨モデル |
 |------------|-----------|
-| Karo (家老) | `gpt-5.3-codex` |
-| Gunshi (軍師) | `gpt-5.1-codex-max` |
+| Karo (コーディネーター) | `gpt-5.3-codex` |
+| Gunshi (アナライザー) | `gpt-5.1-codex-max` |
 
 ### `config/settings.yaml` snippet
 
@@ -261,7 +261,7 @@ available_cost_groups:
 
 capability_tiers:
   gpt-5.3-codex-spark:
-    max_bloom: 3       # L1-L3: 1000+ tok/s — 足軽7体でも余裕のスループット
+    max_bloom: 3       # L1-L3: 1000+ tok/s — エグゼキューター7体でも余裕のスループット
     cost_group: chatgpt_pro
   gpt-5.3-codex:
     max_bloom: 4       # L4: Terminal-Bench 77.3%, 400K+ context
@@ -291,8 +291,8 @@ capability_tiers:
 
 | エージェント | 推奨モデル |
 |------------|-----------|
-| Karo (家老) | `claude-sonnet-4-6` |
-| Gunshi (軍師) | `claude-opus-4-6` |
+| Karo (コーディネーター) | `claude-sonnet-4-6` |
+| Gunshi (アナライザー) | `claude-opus-4-6` |
 
 ### `config/settings.yaml` snippet
 
@@ -336,8 +336,8 @@ capability_tiers:
 
 | エージェント | 推奨モデル | 理由 |
 |------------|-----------|------|
-| Karo (家老) | `claude-sonnet-4-6` | L4-L5オーケストレーション。SWE-bench 79.6% |
-| Gunshi (軍師) | `claude-opus-4-6` | L5-L6深いQC。SWE-bench 80.8% |
+| Karo (コーディネーター) | `claude-sonnet-4-6` | L4-L5オーケストレーション。SWE-bench 79.6% |
+| Gunshi (アナライザー) | `claude-opus-4-6` | L5-L6深いQC。SWE-bench 80.8% |
 
 ### Q3a×Q3b の回答別 config
 
@@ -479,11 +479,11 @@ cli:
   agents:
     karo:
       type: claude
-      model: claude-sonnet-4-6     # ← Karo推奨モデルに変更
+      model: claude-sonnet-4-6     # ← コーディネーター推奨モデルに変更
     gunshi:
       type: claude
-      model: opus                  # ← Gunshi推奨モデルに変更
-    ashigaru1:                     # ← 足軽はcapability_tiersに従って自動ルーティング
+      model: opus                  # ← アナライザー推奨モデルに変更
+    ashigaru1:                     # ← エグゼキューターはcapability_tiersに従って自動ルーティング
       type: codex                  #    CLIの種類はサブスクに合わせて設定
       model: gpt-5.3-codex-spark
 ```
@@ -507,11 +507,11 @@ source lib/cli_adapter.sh && validate_subscription_coverage
 
 ```
 Claude Pro以上を契約している?
-  Yes → 固定エージェント(Shogun/Karo/Gunshi)にClaudeが使える ✓
+  Yes → 固定エージェント(オーケストレーター/コーディネーター/アナライザー)にClaudeが使える ✓
   No  → Codexのみ。L6ギャップに注意 ⚠️
 
 ChatGPT Pro ($200) を契約している?
   Yes → Spark (L1-L3, 1000 tok/s) + gpt-5.3 (L4) が使える ✓
   Plus ($20) → gpt-5.3 (L3-L4) のみ。Spark不可。
-  なし → Claude Haikuが足軽のL1-L3を担当
+  なし → Claude Haikuがエグゼキューターの L1-L3を担当
 ```

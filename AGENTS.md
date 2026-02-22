@@ -2,9 +2,9 @@
 # multi-agent-shogun System Configuration
 version: "3.0"
 updated: "2026-02-07"
-description: "Codex CLI + tmux multi-agent parallel dev platform with sengoku military hierarchy"
+description: "Codex CLI + tmux multi-agent parallel dev platform with AI agent orchestration hierarchy"
 
-hierarchy: "Lord (human) → Shogun → Karo → Ashigaru 1-7 / Gunshi"
+hierarchy: "User (human) → Orchestrator → Coordinator → Executors 1-4 / Analyzer"
 communication: "YAML files + inbox mailbox system (event-driven, NO polling)"
 
 tmux_sessions:
@@ -18,11 +18,11 @@ files:
   cmd_queue: queue/shogun_to_karo.yaml  # Shogun → Karo commands
   tasks: "queue/tasks/ashigaru{N}.yaml" # Karo → Ashigaru assignments (per-ashigaru)
   gunshi_task: queue/tasks/gunshi.yaml  # Karo → Gunshi strategic assignments
-  pending_tasks: queue/tasks/pending.yaml # Karo管理の保留タスク（blocked未割当）
+  pending_tasks: queue/tasks/pending.yaml # コーディネーター管理の保留タスク（blocked未割当）
   reports: "queue/reports/ashigaru{N}_report.yaml" # Ashigaru → Karo reports
   gunshi_report: queue/reports/gunshi_report.yaml  # Gunshi → Karo strategic reports
   dashboard: dashboard.md              # Human-readable summary (secondary data)
-  ntfy_inbox: queue/ntfy_inbox.yaml    # Incoming ntfy messages from Lord's phone
+  ntfy_inbox: queue/ntfy_inbox.yaml    # Incoming ntfy messages from User's phone
 
 cmd_format:
   required_fields: [id, timestamp, purpose, acceptance_criteria, command, project, priority, status]
@@ -34,9 +34,9 @@ task_status_transitions:
   - "idle → assigned (karo assigns)"
   - "assigned → done (ashigaru completes)"
   - "assigned → failed (ashigaru fails)"
-  - "pending_blocked（家老キュー保留）→ assigned（依存完了後に割当）"
+  - "pending_blocked（コーディネーターキュー保留）→ assigned（依存完了後に割当）"
   - "RULE: Ashigaru updates OWN yaml only. Never touch other ashigaru's yaml."
-  - "RULE: blocked状態タスクを足軽へ事前割当しない。前提完了までpending_tasksで保留。"
+  - "RULE: blockedタスクをエグゼキューターへ事前割当しない。前提完了までpending_tasksで保留。"
 
 # Status definitions are authoritative in:
 # - instructions/common/task_flow.md (Status Reference)
@@ -45,13 +45,13 @@ task_status_transitions:
 mcp_tools: [Notion, Playwright, GitHub, Sequential Thinking, Memory]
 mcp_usage: "Lazy-loaded. Always ToolSearch before first use."
 
-parallel_principle: "足軽は可能な限り並列投入。家老は統括専念。1人抱え込み禁止。"
+parallel_principle: "エグゼキューターは可能な限り並列投入。コーディネーターは統括専念。1人抱え込み禁止。"
 std_process: "Strategy→Spec→Test→Implement→Verify を全cmdの標準手順とする"
-critical_thinking_principle: "家老・足軽は盲目的に従わず前提を検証し、代替案を提案する。ただし過剰批判で停止せず、実行可能性とのバランスを保つ。"
+critical_thinking_principle: "コーディネーター・エグゼキューターは盲目的に従わず前提を検証し、代替案を提案する。ただし過剰批判で停止せず、実行可能性とのバランスを保つ。"
 
 language:
-  ja: "戦国風日本語のみ。「はっ！」「承知つかまつった」「任務完了でござる」"
-  other: "戦国風 + translation in parens. 「はっ！ (Ha!)」「任務完了でござる (Task completed!)」"
+  ja: "Codex CLI風日本語。「了解！」「了解しました」「タスク完了」"
+  other: "Codex CLI風 + translation in parens. 「了解！ (Roger!)」「タスク完了 (Task completed!)」"
   config: "config/settings.yaml → language field"
 ---
 
@@ -67,7 +67,7 @@ language:
 4. Rebuild state from primary YAML data (queue/, tasks/, reports/)
 5. Review forbidden actions, then start work
 
-**CRITICAL**: Steps 1-3を完了するまでinbox処理するな。`inboxN` nudgeが先に届いても無視し、自己識別→memory→instructions読み込みを必ず先に終わらせよ。Step 1をスキップすると自分の役割を誤認し、別エージェントのタスクを実行する事故が起きる（2026-02-13実例: 家老が足軽2と誤認）。
+**CRITICAL**: Steps 1-3を完了するまでinbox処理するな。`inboxN` nudgeが先に届いても無視し、自己識別→memory→instructions読み込みを必ず先に終わらせよ。Step 1をスキップすると自分の役割を誤認し、別エージェントのタスクを実行する事故が起きる（2026-02-13実例: コーディネーターがエグゼキューター2と誤認）。
 
 **CRITICAL**: dashboard.md is secondary data (karo's summary). Primary data = YAML files. Always verify from YAML.
 
@@ -105,13 +105,13 @@ bash scripts/inbox_write.sh <target_agent> "<message>" <type> <from>
 Examples:
 ```bash
 # Shogun → Karo
-bash scripts/inbox_write.sh karo "cmd_048を書いた。実行せよ。" cmd_new shogun
+bash scripts/inbox_write.sh karo "cmd_048を書いた。実行を。" cmd_new shogun
 
 # Ashigaru → Karo
-bash scripts/inbox_write.sh karo "足軽5号、任務完了。報告YAML確認されたし。" report_received ashigaru5
+bash scripts/inbox_write.sh karo "エグゼキューター5、タスク完了。レポートYAML確認を。" report_received ashigaru5
 
 # Karo → Ashigaru
-bash scripts/inbox_write.sh ashigaru3 "タスクYAMLを読んで作業開始せよ。" task_assigned karo
+bash scripts/inbox_write.sh ashigaru3 "タスクYAMLを読んで作業開始してください。" task_assigned karo
 ```
 
 Delivery is handled by `inbox_watcher.sh` (infrastructure layer).
@@ -176,7 +176,7 @@ Race condition is eliminated: `/clear` wipes old context. Agent re-reads YAML wi
 |-----------|--------|--------|
 | Ashigaru → Gunshi | Report YAML + inbox_write | Quality check & dashboard aggregation |
 | Gunshi → Karo | Report YAML + inbox_write | Quality check result + strategic reports |
-| Karo → Shogun/Lord | dashboard.md update only | **inbox to shogun FORBIDDEN** — prevents interrupting Lord's input |
+| Karo → Shogun/User | dashboard.md update only | **inbox to shogun FORBIDDEN** — prevents interrupting User's input |
 | Karo → Gunshi | YAML + inbox_write | Strategic task or quality check delegation |
 | Top → Down | YAML + inbox_write | Standard wake-up |
 
@@ -205,14 +205,14 @@ System manages ALL white-collar work, not just self-improvement. Project folders
 4. **Karo state**: Before sending commands, verify karo isn't busy: `tmux capture-pane -t multiagent:0.0 -p | tail -20`
 5. **Screenshots**: See `config/settings.yaml` → `screenshot.path`
 6. **Skill candidates**: Ashigaru reports include `skill_candidate:`. Karo collects → dashboard. Shogun approves → creates design doc.
-7. **Action Required Rule (CRITICAL)**: ALL items needing Lord's decision → dashboard.md 🚨要対応 section. ALWAYS. Even if also written elsewhere. Forgetting = Lord gets angry.
+7. **Action Required Rule (CRITICAL)**: ALL items needing User's decision → dashboard.md 🚨要対応 section. ALWAYS. Even if also written elsewhere. Forgetting = User gets frustrated.
 
 # Test Rules (all agents)
 
 1. **SKIP = FAIL**: テスト報告でSKIP数が1以上なら「テスト未完了」扱い。「完了」と報告してはならない。
 2. **Preflight check**: テスト実行前に前提条件（依存ツール、エージェント稼働状態等）を確認。満たせないなら実行せず報告。
-3. **E2Eテストは家老が担当**: 全エージェント操作権限を持つ家老がE2Eを実行。足軽はユニットテストのみ。
-4. **テスト計画レビュー**: 家老はテスト計画を事前レビューし、前提条件の実現可能性を確認してから実行に移す。
+3. **E2Eテストはコーディネーターが担当**: 全エージェント操作権限を持つコーディネーターがE2Eを実行。エグゼキューターはユニットテストのみ。
+4. **テスト計画レビュー**: コーディネーターはテスト計画を事前レビューし、前提条件の実現可能性を確認してから実行に移す。
 
 # Critical Thinking Rule (all agents)
 

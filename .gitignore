@@ -58,7 +58,7 @@
 !AGENTS.md
 
 # Setup and deployment scripts
-!shutsujin_departure.sh
+!launch.sh
 !first_setup.sh
 !setup.sh
 !install.bat
@@ -96,6 +96,7 @@
 !scripts/stop_hook_inbox.sh
 !scripts/agent_status.sh
 !scripts/ratelimit_check.sh
+!scripts/generate_banner_art.py
 
 
 # SayTask (sample template only, not actual data)

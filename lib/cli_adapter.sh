@@ -711,7 +711,7 @@ should_trigger_bloom_analysis() {
     local bloom_analysis_required="${2:-false}"
     local gunshi_available="${3:-yes}"
 
-    # 軍師未起動 → Phase 2フォールバック
+    # アナライザー未起動 → Phase 2フォールバック
     if [[ "$gunshi_available" = "no" ]]; then
         echo "fallback"
         return 0
@@ -898,9 +898,9 @@ except Exception:
 }
 
 # find_agent_for_model() — Issue #53 Phase 2
-# 指定モデルを使用している空き足軽を探す。
+# 指定モデルを使用している空きエグゼキューターを探す。
 #
-# 核心設計原則（殿の方針）:
+# 核心設計原則（ユーザーの方針）:
 #   - ビジーペイン: 絶対に触らない（作業中断・データ消失リスク）
 #   - アイドルペイン: CLI切り替えOK（停止→起動）
 #   例) Codex 5.3が必要でClaude CodeしかアイドルならClaude Codeに降格OK
@@ -911,7 +911,7 @@ except Exception:
 #   $1: recommended_model — get_recommended_model() の返り値
 #
 # 返り値:
-#   空き足軽ID (例: "ashigaru4") — 完全一致またはフォールバック
+#   空きエグゼキューターID (例: "ashigaru4") — 完全一致またはフォールバック
 #   全員ビジー → "QUEUE"
 #   エラー → "" (空文字)
 #
@@ -920,7 +920,7 @@ except Exception:
 #   case "$agent" in
 #     QUEUE) echo "待機キューに積む" ;;
 #     "")    echo "エラー" ;;
-#     *)     echo "足軽: $agent に振る（karo.mdがCLI切り替えを判断）" ;;
+#     *)     echo "エグゼキューター: $agent に振る（karo.mdがCLI切り替えを判断）" ;;
 #   esac
 find_agent_for_model() {
     local recommended_model="$1"
@@ -931,7 +931,7 @@ find_agent_for_model() {
 
     local settings="${CLI_ADAPTER_SETTINGS:-${CLI_ADAPTER_PROJECT_ROOT}/config/settings.yaml}"
 
-    # settings.yaml の cli.agents から recommended_model を使用する足軽を抽出
+    # settings.yaml の cli.agents から recommended_model を使用するエグゼキューターを抽出
     local candidates
     candidates=$("$CLI_ADAPTER_PROJECT_ROOT/.venv/bin/python3" -c "
 import yaml, sys
@@ -944,7 +944,7 @@ try:
 
     results = []
     for agent_id, spec in agents.items():
-        # 足軽のみ対象（karo, gunshi, shogunは除外）
+        # エグゼキューターのみ対象（karo, gunshi, shogunは除外）
         if not agent_id.startswith('ashigaru'):
             continue
         if not isinstance(spec, dict):
@@ -960,7 +960,7 @@ except Exception:
     pass
 " 2>/dev/null)
 
-    # 候補足軽を順番にチェック（空きを探す）
+    # 候補エグゼキューターを順番にチェック（空きを探す）
     # agent_status.sh の agent_is_busy_check を再利用
     local agent_status_lib="${CLI_ADAPTER_PROJECT_ROOT}/lib/agent_status.sh"
 
@@ -1001,8 +1001,8 @@ except Exception:
         fi
     done
 
-    # フェーズ2: 完全一致が全員ビジー → 任意のアイドル足軽にフォールバック
-    # 殿の方針: 「Codex 5.3が欲しくて Claude Code しか空いていなければ Claude Code で可」
+    # フェーズ2: 完全一致が全員ビジー → 任意のアイドルエグゼキューターにフォールバック
+    # ユーザーの方針: 「Codex 5.3が欲しくて Claude Code しか空いていなければ Claude Code で可」
     # kill/restart は絶対しない。アイドルペインを再利用する。
     local all_agents
     all_agents=$("$CLI_ADAPTER_PROJECT_ROOT/.venv/bin/python3" -c "
@@ -1046,13 +1046,13 @@ except Exception:
         fi
     done
 
-    # 全足軽ビジー → キュー待ち
+    # 全エグゼキュータービジー → キュー待ち
     echo "QUEUE"
     return 0
 }
 
 # get_ashigaru_ids()
-# settings.yaml の cli.agents から足軽ID一覧を返す（スペース区切り、番号順）
+# settings.yaml の cli.agents からエグゼキューターID一覧を返す（スペース区切り、番号順）
 # フォールバック: "ashigaru1 ashigaru2 ashigaru3 ashigaru4 ashigaru5 ashigaru6 ashigaru7"
 get_ashigaru_ids() {
     local settings="${CLI_ADAPTER_SETTINGS:-${CLI_ADAPTER_PROJECT_ROOT}/config/settings.yaml}"
