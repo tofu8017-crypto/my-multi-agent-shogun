@@ -2,6 +2,9 @@
 # inbox_write.sh — メールボックスへのメッセージ書き込み（排他ロック付き）
 # Usage: bash scripts/inbox_write.sh <target_agent> <content> [type] [from]
 # Example: bash scripts/inbox_write.sh karo "エグゼキューター5号、タスク完了" report_received ashigaru5
+#
+# ロック方式: mkdir ベース（Linux/macOS 両対応）
+# mkdir はPOSIXでアトミック操作が保証されているため、flock不要
 
 set -e
 
@@ -12,7 +15,7 @@ TYPE="${3:-wake_up}"
 FROM="${4:-unknown}"
 
 INBOX="$SCRIPT_DIR/queue/inbox/${TARGET}.yaml"
-LOCKFILE="${INBOX}.lock"
+LOCKDIR="${INBOX}.lockdir"
 
 # Validate arguments
 if [ -z "$TARGET" ] || [ -z "$CONTENT" ]; then
@@ -30,13 +33,34 @@ fi
 MSG_ID="msg_$(date +%Y%m%d_%H%M%S)_$(head -c 4 /dev/urandom | xxd -p)"
 TIMESTAMP=$(date "+%Y-%m-%dT%H:%M:%S")
 
-# Atomic write with flock (3 retries)
+# Cleanup stale lock (older than 30 seconds)
+cleanup_stale_lock() {
+    if [ -d "$LOCKDIR" ]; then
+        local lock_age
+        if stat -f %m "$LOCKDIR" >/dev/null 2>&1; then
+            # macOS stat
+            lock_age=$(( $(date +%s) - $(stat -f %m "$LOCKDIR") ))
+        else
+            # Linux stat
+            lock_age=$(( $(date +%s) - $(stat -c %Y "$LOCKDIR") ))
+        fi
+        if [ "$lock_age" -gt 30 ]; then
+            echo "[inbox_write] Removing stale lock (${lock_age}s old)" >&2
+            rmdir "$LOCKDIR" 2>/dev/null || true
+        fi
+    fi
+}
+
+# Acquire lock with mkdir (atomic on both Linux and macOS)
 attempt=0
 max_attempts=3
 
 while [ $attempt -lt $max_attempts ]; do
-    if (
-        flock -w 5 200 || exit 1
+    cleanup_stale_lock
+
+    if mkdir "$LOCKDIR" 2>/dev/null; then
+        # Lock acquired — ensure cleanup on exit
+        trap 'rmdir "$LOCKDIR" 2>/dev/null || true' EXIT
 
         # Add message via python3 (unified YAML handling)
         "$SCRIPT_DIR/.venv/bin/python3" -c "
@@ -86,16 +110,17 @@ try:
 except Exception as e:
     print(f'ERROR: {e}', file=sys.stderr)
     sys.exit(1)
-" || exit 1
+" || { rmdir "$LOCKDIR" 2>/dev/null || true; exit 1; }
 
-    ) 200>"$LOCKFILE"; then
-        # Success
+        # Release lock and exit
+        rmdir "$LOCKDIR" 2>/dev/null || true
+        trap - EXIT
         exit 0
     else
-        # Lock timeout or error
+        # Lock busy — retry
         attempt=$((attempt + 1))
         if [ $attempt -lt $max_attempts ]; then
-            echo "[inbox_write] Lock timeout for $INBOX (attempt $attempt/$max_attempts), retrying..." >&2
+            echo "[inbox_write] Lock busy for $INBOX (attempt $attempt/$max_attempts), retrying..." >&2
             sleep 1
         else
             echo "[inbox_write] Failed to acquire lock after $max_attempts attempts for $INBOX" >&2
